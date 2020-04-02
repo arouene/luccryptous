@@ -4,15 +4,15 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
-	"encoding/hex"
 	"encoding/base64"
+	"encoding/hex"
 	"io"
 	"log"
 	"net/http"
 
-	"github.com/google/uuid"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/spf13/viper"
 )
 
@@ -22,8 +22,8 @@ const (
 )
 
 var (
-	block cipher.Block
-	passwordSize int
+	block           cipher.Block
+	passwordSize    int
 	passwordCharset string
 )
 
@@ -42,7 +42,7 @@ func init() {
 	viper.AddConfigPath("$HOME/.config/luccryptous/")
 	viper.AddConfigPath("/etc/luccryptous/")
 	if err := viper.ReadInConfig(); err != nil {
-		log.Printf("Config file %s not found\n", configFileName + "." + configFileType)
+		log.Printf("Config file %s not found\n", configFileName+"."+configFileType)
 	} else {
 		log.Printf("Config file used: %s\n", viper.ConfigFileUsed())
 	}
@@ -80,7 +80,7 @@ func main() {
 	api := router.Group("/api")
 	{
 		api.GET("/ping", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H {
+			c.JSON(http.StatusOK, gin.H{
 				"message": "pong",
 			})
 		})
@@ -97,10 +97,10 @@ func main() {
    one Numeric and one Symbol. */
 func generateRandomString(n int) ([]byte, error) {
 	var (
-		hasUpper = false
-		hasLower = false
+		hasUpper    = false
+		hasLower    = false
 		hasNumerics = false
-		hasSymbols = false
+		hasSymbols  = false
 	)
 
 	var buf = make([]byte, n)
@@ -114,7 +114,7 @@ func generateRandomString(n int) ([]byte, error) {
 		}
 
 		for i, b := range buf {
-			buf[i] = passwordCharset[int(b) % len(passwordCharset)]
+			buf[i] = passwordCharset[int(b)%len(passwordCharset)]
 
 			switch {
 			case buf[i] >= 48 && buf[i] <= 57:
@@ -135,7 +135,7 @@ func generateRandomString(n int) ([]byte, error) {
 /* Encrypt plaintext using AES 256 CFB */
 func encrypt(plaintext []byte) ([]byte, error) {
 	// Buffer for IV + encrypted secret
-	ciphertext := make([]byte, aes.BlockSize + len(plaintext))
+	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
 
 	// Initialise a random IV
 	iv := ciphertext[:aes.BlockSize]
@@ -158,7 +158,7 @@ func processEncryption(c *gin.Context, data interface{}) {
 	case []byte:
 		plaintext = v
 	default:
-		c.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H {
+		c.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{
 			"message": "Type error at encryption",
 		})
 		return
@@ -166,11 +166,11 @@ func processEncryption(c *gin.Context, data interface{}) {
 
 	ciphertext, err := encrypt(plaintext)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H {
+		c.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{
 			"message": "Error at encryption",
 		})
 	} else {
-		c.JSON(http.StatusOK, gin.H {
+		c.JSON(http.StatusOK, gin.H{
 			"secret": base64.StdEncoding.EncodeToString(ciphertext),
 		})
 	}
@@ -178,7 +178,7 @@ func processEncryption(c *gin.Context, data interface{}) {
 
 func getUUID(c *gin.Context) {
 	if secret, err := uuid.NewRandom(); err != nil {
-		c.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H {
+		c.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{
 			"message": "Error at UUID generation",
 		})
 	} else {
@@ -188,7 +188,7 @@ func getUUID(c *gin.Context) {
 
 func getPass(c *gin.Context) {
 	if secret, err := generateRandomString(passwordSize); err != nil {
-		c.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H {
+		c.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{
 			"message": "Error at password generation",
 		})
 	} else {
@@ -200,7 +200,7 @@ func msgCrypt(c *gin.Context) {
 	var payload Payload
 
 	if err := c.BindJSON(&payload); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"message": "*secret* field is required",
 		})
 	} else {
