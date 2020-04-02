@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
@@ -23,6 +24,7 @@ const (
 
 var (
 	block           cipher.Block
+	debug           bool
 	passwordSize    int
 	passwordCharset string
 )
@@ -33,28 +35,32 @@ type Payload struct {
 
 func init() {
 	// That the solution of Life, the Universe, and Encryption
+	viper.SetDefault("General.debug", false)
 	viper.SetDefault("Password Generation.size", 42)
 	viper.SetDefault("Password Generation.charset", "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz !#$%&()*+,-./:;<=>?@[]^_`{|}~")
+
 	viper.SetConfigName(configFileName)
 	viper.SetConfigType(configFileType)
+
 	viper.AddConfigPath(".")
 	viper.AddConfigPath("$HOME/.luccryptous/")
 	viper.AddConfigPath("$HOME/.config/luccryptous/")
 	viper.AddConfigPath("/etc/luccryptous/")
+
 	if err := viper.ReadInConfig(); err != nil {
 		log.Printf("Config file %s not found\n", configFileName+"."+configFileType)
 	} else {
 		log.Printf("Config file used: %s\n", viper.ConfigFileUsed())
 	}
 
-	viper.SetEnvPrefix("luccryptous")
+	viper.SetEnvPrefix("luccrypt")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", " ", "_"))
 	viper.AutomaticEnv()
 
+	debug = viper.GetBool("General.debug")
 	encodedKey := viper.GetString("General.key")
-	passwordSize = viper.GetInt("Password_Generation.size")
+	passwordSize = viper.GetInt("Password Generation.size")
 	passwordCharset = viper.GetString("Password Generation.charset")
-
-	log.Print(passwordSize)
 
 	if len(encodedKey) != 64 {
 		panic("Key must be composed of 64 hexadecimal characters")
@@ -69,6 +75,11 @@ func init() {
 	block, err = aes.NewCipher([]byte(key))
 	if err != nil {
 		panic(err)
+	}
+
+	// Gin debug mode
+	if !debug {
+		gin.SetMode(gin.ReleaseMode)
 	}
 }
 

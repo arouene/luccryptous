@@ -1,0 +1,7 @@
+[General]
+Key = "2101a2ef703572c0fc0a2874608e6958a063a25fd92517b6c10ab3e5ba86b3da"
+Debug = false
+
+["Password Generation"]
+size = 42
+charset = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz !#$%&()*+,-./:;<=>?@[]^_`{|}~"
