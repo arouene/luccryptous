@@ -13,12 +13,17 @@ Create a file luccryptous.toml or use the example, then edit the values.
 | General             | Key   |         | Encryption key, required                      |
 | General             | Debug | false   | Set to true to switch gin gonic in debug mode |
 | Password Generation | size  | 42      | Size                                          |
+| Password Generation 
 
 # Installation
 
 ## Build
 
+podman build -t luccryptous .
+
 ## Execution
+
+podman run -it --rm -m 500m -p 3000:3000 --name luccryptous luccrypouts
 
 Ports:
 - 3000

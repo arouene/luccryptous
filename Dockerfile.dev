@@ -1,0 +1,15 @@
+FROM debian:buster
+
+WORKDIR /app
+
+RUN apt update -y \
+ && apt install -y \
+        git \
+        npm \
+        nodejs \
+ && rm -rf /var/lib/apt/lists/*
+
+EXPOSE 5000
+EXPOSE 35729
+
+VOLUME /app

@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -34,8 +35,8 @@ type Payload struct {
 }
 
 func init() {
-	// That the solution of Life, the Universe, and Encryption
-	viper.SetDefault("General.debug", false)
+	// Configuration initialisation
+	viper.SetDefault("General.debug", false)  // That the solution of Life, the Universe, and Encryption
 	viper.SetDefault("Password Generation.size", 42)
 	viper.SetDefault("Password Generation.charset", "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz !#$%&()*+,-./:;<=>?@[]^_`{|}~")
 
@@ -48,7 +49,7 @@ func init() {
 	viper.AddConfigPath("/etc/luccryptous/")
 
 	if err := viper.ReadInConfig(); err != nil {
-		log.Printf("Config file %s not found\n", configFileName+"."+configFileType)
+		log.Printf("Config file %s cannot be read\n", configFileName+"."+configFileType)
 	} else {
 		log.Printf("Config file used: %s\n", viper.ConfigFileUsed())
 	}
@@ -86,8 +87,13 @@ func init() {
 func main() {
 	router := gin.Default()
 
+	// Handle CORS, allow all origins
+	router.Use(cors.Default())
+
+	// Static routing
 	router.Use(static.Serve("/", static.LocalFile("./views", true)))
 
+	// API routing
 	api := router.Group("/api")
 	{
 		api.GET("/ping", func(c *gin.Context) {
@@ -95,7 +101,7 @@ func main() {
 				"message": "pong",
 			})
 		})
-		api.GET("/guid", getUUID)
+		api.GET("/uuid", getUUID)
 		api.GET("/pass", getPass)
 		api.POST("/crypt", msgCrypt)
 	}
