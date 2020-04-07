@@ -1,6 +1,8 @@
 <script>
     import { Tabs, Tab, TabLabel, TabContent } from './Tabs';
 
+    const apiUrl = "/api";
+
     let ciphertext = "";
     let plaintext = "";
     let password = "";
@@ -8,7 +10,7 @@
 
     async function cryptPlaintext(event) {
         ciphertext = "Waiting...";
-        const res = await fetch(`/api/crypt`, {
+        const res = await fetch(apiUrl + `/crypt`, {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({secret: event.target.value})
@@ -24,7 +26,7 @@
 
     async function genPass() {
         password = "Waiting...";
-        const res = await fetch(`/api/pass`);
+        const res = await fetch(apiUrl + `/pass`);
         const pass = await res.json();
 
         if (res.ok) {
@@ -36,7 +38,7 @@
 
     async function genUUID() {
         uuid = "Waiting...";
-        const res = await fetch(`/api/uuid`);
+        const res = await fetch(apiUrl + `/uuid`);
         const pass = await res.json();
 
         if (res.ok) {
