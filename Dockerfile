@@ -21,7 +21,7 @@ RUN apt update -y \
         nodejs \
  && rm -rf /var/lib/apt/lists/*
 
-COPY build .
+COPY front .
 
 RUN npm install --no-package-lock
 RUN npm run build
