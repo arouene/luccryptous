@@ -3,81 +3,78 @@
 
     const apiUrl = "/api";
 
-    let ciphertext = "";
-    let plaintext = "";
-    let password = "";
-    let uuid = "";
+    let fields = {
+        "plaintext": "",
+        "crypt": "",
+        "pass": "",
+        "uuid": "",
+    }
 
-    async function cryptPlaintext(event) {
-        ciphertext = "Waiting...";
-        const res = await fetch(apiUrl + `/crypt`, {
+    function debounce(func, wait) {
+        var timeout;
+        return function() {
+            var context = this, args = arguments;
+            var later = function() {
+                timeout = null;
+                func.apply(context, args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    };
+
+    const cryptPlaintext = debounce(event => {
+        genService("crypt", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({secret: event.target.value})
-        });
-        const pass = await res.json();
+        }).apply();
+    }, 300)
 
-        if (res.ok) {
-            ciphertext = pass.secret;
-        } else {
-            ciphertext = "Error...";
-        }
-    }
+    function genService(service, args = {}) {
+        return async function(e) {
+            fields[service] = "Waiting...";
+            const res = await fetch(apiUrl + `/` + service, args);
+            const pass = await res.json();
 
-    async function genPass() {
-        password = "Waiting...";
-        const res = await fetch(apiUrl + `/pass`);
-        const pass = await res.json();
-
-        if (res.ok) {
-            password = pass.secret;
-        } else {
-            password = "Error...";
-        }
-    }
-
-    async function genUUID() {
-        uuid = "Waiting...";
-        const res = await fetch(apiUrl + `/uuid`);
-        const pass = await res.json();
-
-        if (res.ok) {
-            uuid = pass.secret;
-        } else {
-            uuid = "Error...";
+            if (res.ok) {
+                fields[service] = pass.secret;
+            } else {
+                fields[service] = "Error...";
+            }
         }
     }
 
     function switchTab(event) {
         switch(event.detail.tab) {
         case 2:
-            genPass();
+            genService("pass").apply();
             break;
         case 3:
-            genUUID();
+            genService("uuid").apply();
             break;
         }
     }
 </script>
 
 <style>
-    :global(body) {
-        background: linear-gradient(45deg,#ff8737 29.25%,#f60 100%) no-repeat fixed;
-        background-color: #f90;
-    }
+ :global(body) {
+     background: linear-gradient(45deg,#ff8737 29.25%,#f60 100%) no-repeat fixed;
+     background-color: #f90;
+ }
 
-	h1 {
-		color: white;
-		text-transform: uppercase;
-        text-align: center;
-		font-size: 4em;
-		font-weight: 100;
-	}
+ h1 {
+     color: white;
+     text-transform: uppercase;
+     text-align: center;
+     font-size: 4em;
+     font-weight: 100;
+ }
 
-    input {
-        width: 100%;
-        font-size: 0.95em;
-    }
+ input {
+     width: 100%;
+     font-size: 0.95em;
+ }
 </style>
 
 <h1>Luccryptous</h1>
@@ -92,7 +89,7 @@
       </label>
       <label>
         <h3>Ciphertext :</h3>
-        <input readonly value={ciphertext} on:click={navigator.clipboard.writeText(ciphertext)}>
+        <input readonly value={fields.crypt} on:click={navigator.clipboard.writeText(fields.crypt)}>
       </label>
     </TabContent>
   </Tab>
@@ -101,9 +98,9 @@
     <TabContent>
       <label>
         <h3>Ciphertext :</h3>
-        <input readonly value={password} on:click={navigator.clipboard.writeText(password)}>
+        <input readonly value={fields.pass} on:click={navigator.clipboard.writeText(fields.pass)}>
       </label>
-      <button on:click={genPass}>Regénérer</button>
+      <button on:click={genService(`pass`)}>Regénérer</button>
     </TabContent>
   </Tab>
   <Tab on:switch={switchTab}>
@@ -111,9 +108,9 @@
     <TabContent>
       <label>
         <h3>Ciphertext :</h3>
-        <input readonly value={uuid} on:click={navigator.clipboard.writeText(uuid)}>
+        <input readonly value={fields.uuid} on:click={navigator.clipboard.writeText(fields.uuid)}>
       </label>
-      <button on:click={genUUID}>Regénérer</button>
+      <button on:click={genService(`uuid`)}>Regénérer</button>
     </TabContent>
   </Tab>
 </Tabs>
