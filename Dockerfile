@@ -23,7 +23,7 @@ RUN apt update -y \
 
 COPY front .
 
-RUN npm install --no-package-lock
+RUN npm install
 RUN npm run build
 
 
