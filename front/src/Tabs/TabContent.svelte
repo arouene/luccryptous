@@ -16,7 +16,7 @@
   opacity: 0;
   transition: all 0.35s;
 }
-.tab-switch:checked + label + .tab-content {
+:global(.tab-switch:checked + label + .tab-content) {
   z-index: 2;
   opacity: 1;
   transition: all 0.35s;

@@ -24,7 +24,7 @@
   top: -0.25rem;
   transition: top 0.25s;
 }
-.tab-switch:checked + .tab-label {
+:global(.tab-switch:checked + .tab-label) {
   background: #fff;
   color: #2c3e50;
   border-bottom: 0;
