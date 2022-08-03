@@ -1,5 +1,5 @@
 # Build the application
-FROM golang:1.14-buster AS back
+FROM golang:1.19-buster AS back
 
 WORKDIR /go/src/app
 
