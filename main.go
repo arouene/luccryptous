@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"io"
 	"log"
+	"math/big"
 	"net/http"
 	"strings"
 
@@ -28,6 +29,10 @@ var (
 	debug           bool
 	passwordSize    int
 	passwordCharset string
+	checkUpper      bool
+	checkLower      bool
+	checkNumerics   bool
+	checkSymbols    bool
 )
 
 type Payload struct {
@@ -36,9 +41,13 @@ type Payload struct {
 
 func init() {
 	// Configuration initialisation
-	viper.SetDefault("General.debug", false)  // That the solution of Life, the Universe, and Encryption
+	viper.SetDefault("General.debug", false) // That the solution of Life, the Universe, and Encryption
 	viper.SetDefault("Password Generation.size", 42)
 	viper.SetDefault("Password Generation.charset", "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz !#$%&()*+,-./:;<=>?@[]^_`{|}~")
+	viper.SetDefault("Password Generation.check_uppercase", true)
+	viper.SetDefault("Password Generation.check_lowercase", true)
+	viper.SetDefault("Password Generation.check_numerics", true)
+	viper.SetDefault("Password Generation.check_symbols", true)
 
 	viper.SetConfigName(configFileName)
 	viper.SetConfigType(configFileType)
@@ -62,6 +71,13 @@ func init() {
 	encodedKey := viper.GetString("General.key")
 	passwordSize = viper.GetInt("Password Generation.size")
 	passwordCharset = viper.GetString("Password Generation.charset")
+
+	hasUpper, hasLower, hasNumerics, hasSymbols := checkCharsetVerifications(passwordCharset)
+
+	checkUpper = viper.GetBool("Password Generation.check_uppercase") && hasUpper
+	checkLower = viper.GetBool("Password Generation.check_lowercase") && hasLower
+	checkNumerics = viper.GetBool("Password Generation.check_numerics") && hasNumerics
+	checkSymbols = viper.GetBool("Password Generation.check_symbols") && hasSymbols
 
 	if len(encodedKey) != 64 {
 		panic("Key must be composed of 64 hexadecimal characters")
@@ -109,6 +125,48 @@ func main() {
 	_ = router.Run(":3000")
 }
 
+/* Check if password verifications like hasUpper is ok with the current
+   password charset */
+func checkCharsetVerifications(charset string) (bool, bool, bool, bool) {
+	var (
+		hasUpper    = false
+		hasLower    = false
+		hasNumerics = false
+		hasSymbols  = false
+	)
+
+	for _, c := range charset {
+		switch {
+		case c >= 48 && c <= 57:
+			hasNumerics = true
+		case c >= 65 && c <= 90:
+			hasUpper = true
+		case c >= 97 && c <= 122:
+			hasLower = true
+		default:
+			hasSymbols = true
+		}
+	}
+
+	return hasUpper, hasLower, hasNumerics, hasSymbols
+}
+
+/* Check password validity by checking if password contains all
+   mandatory characters sets */
+func passwordIsValid(hasUpper, hasLower, hasNumerics, hasSymbols bool) bool {
+	if checkUpper && !hasUpper {
+		return false
+	} else if checkLower && !hasLower {
+		return false
+	} else if checkNumerics && !hasNumerics {
+		return false
+	} else if checkSymbols && !hasSymbols {
+		return false
+	}
+
+	return true
+}
+
 /* Generate a random password with a secure random number generator,
    passwords have at least one Uppercase letter, one Lowercase letter,
    one Numeric and one Symbol. */
@@ -121,17 +179,18 @@ func generateRandomString(n int) ([]byte, error) {
 	)
 
 	var buf = make([]byte, n)
+	var maxLenChar = big.NewInt(int64(len(passwordCharset)))
 
-	for !(hasSymbols && hasNumerics && hasLower && hasUpper) {
+	for !passwordIsValid(hasUpper, hasLower, hasNumerics, hasSymbols) {
 		hasUpper, hasLower, hasNumerics, hasSymbols = false, false, false, false
 
-		_, err := rand.Read(buf)
-		if err != nil {
-			return nil, err
-		}
+		for i := 0; i < n; i++ {
+			choice, err := rand.Int(rand.Reader, maxLenChar)
+			if err != nil {
+				panic("Error at random number generation: " + err.Error())
+			}
 
-		for i, b := range buf {
-			buf[i] = passwordCharset[int(b)%len(passwordCharset)]
+			buf[i] = passwordCharset[choice.Int64()]
 
 			switch {
 			case buf[i] >= 48 && buf[i] <= 57:
