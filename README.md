@@ -43,11 +43,21 @@ The configuration is in Toml file or environment variables
 Create a file *luccryptous.toml* or use the example, then edit the values.
 
 
-| Section             | Key   | Default | Description                                   |
-|---------------------|-------|---------|-----------------------------------------------|
-| General             | Key   |         | Encryption key, required                      |
-| General             | Debug | false   | Set to true to switch gin gonic in debug mode |
-| Password Generation | size  | 42      | Size                                          |
+| Section             | Key             | Default | Description                                   |
+|---------------------|-----------------|---------|-----------------------------------------------|
+| General             | Key             |         | Encryption key, required                      |
+| General             | Debug           | false   | Set to true to switch gin gonic in debug mode |
+| Password Generation | size            | 42      | Size                                          |
+| Password Generation | charset         | ...     | Char selection                                |
+| Password Generation | check_uppercase | true    | Force password to have uppercase char         |
+| Password Generation | check_lowercase | true    | Force password to have lowercase char         |
+| Password Generation | check_numerics  | true    | Force password to have numerics               |
+| Password Generation | check_symbols   | true    | Force password to have symbols                |
+
+
+For parameters check_uppercase, check_lowercase, check_numerics and check_symbols if
+related characters sets are not in the charset, those parameters are automatically
+disabled.
 
 
 # External dependencies
