@@ -6,6 +6,7 @@
     let fields = {
         "plaintext": "",
         "crypt": "",
+        "cryptfile": "",
         "pass": "",
         "uuid": "",
     }
@@ -31,6 +32,16 @@
         }).apply();
     }, 300)
 
+    const cryptFile = debounce(event => {
+        var payload = new FormData();
+
+        payload.append("file", event.target.files[0], "file");
+        genService("cryptfile", {
+            method: "POST",
+            body: payload
+        }).apply();
+    }, 300)
+
     function genService(service, args = {}) {
         return async function(e) {
             fields[service] = "Waiting...";
@@ -47,10 +58,10 @@
 
     function switchTab(event) {
         switch(event.detail.tab) {
-        case 2:
+        case 3:
             genService("pass").apply();
             break;
-        case 3:
+        case 4:
             genService("uuid").apply();
             break;
         }
@@ -90,6 +101,19 @@
       <label>
         <h3>Ciphertext :</h3>
         <input readonly value={fields.crypt} on:click={navigator.clipboard.writeText(fields.crypt)}>
+      </label>
+    </TabContent>
+  </Tab>
+  <Tab on:switch={switchTab}>
+    <TabLabel>Chiffrer fichier</TabLabel>
+    <TabContent>
+      <label>
+        <h3>File :</h3>
+        <input type="file" on:input={cryptFile} multiple="false">
+      </label>
+      <label>
+        <h3>Ciphertext :</h3>
+        <input readonly value={fields.cryptfile} on:click={navigator.clipboard.writeText(fields.cryptfile)}>
       </label>
     </TabContent>
   </Tab>

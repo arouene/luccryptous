@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"io"
+	"bytes"
 	"log"
 	"math/big"
 	"net/http"
@@ -120,6 +121,7 @@ func main() {
 		api.GET("/uuid", getUUID)
 		api.GET("/pass", getPass)
 		api.POST("/crypt", msgCrypt)
+		api.POST("/cryptfile", fileCrypt)
 	}
 
 	_ = router.Run(":3000")
@@ -282,4 +284,23 @@ func msgCrypt(c *gin.Context) {
 	} else {
 		processEncryption(c, payload.Secret)
 	}
+}
+
+func fileCrypt(c *gin.Context) {
+	header, err := c.FormFile("file")
+	file, err := header.Open()
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"message": err,
+		})
+	}
+	defer file.Close()
+
+	buf := bytes.NewBuffer(nil)
+	if _, err := io.Copy(buf, file); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"message": err,
+		})
+	}
+	processEncryption(c, buf.Bytes())
 }
