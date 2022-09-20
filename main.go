@@ -8,8 +8,6 @@ import (
 	"encoding/hex"
 	"io"
 	"bytes"
-	"fmt"
-	"reflect"
 	"log"
 	"math/big"
 	"net/http"
@@ -232,8 +230,6 @@ func encrypt(plaintext []byte) ([]byte, error) {
 func processEncryption(c *gin.Context, data interface{}) {
 	var plaintext []byte
 
-	fmt.Println(reflect.TypeOf(data))
-
 	switch v := data.(type) {
 	case string:
 		plaintext = []byte(v)
@@ -293,12 +289,12 @@ func msgCrypt(c *gin.Context) {
 func fileCrypt(c *gin.Context) {
 	header, err := c.FormFile("file")
 	file, err := header.Open()
-	defer file.Close()
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"message": err,
 		})
 	}
+	defer file.Close()
 
 	buf := bytes.NewBuffer(nil)
 	if _, err := io.Copy(buf, file); err != nil {
