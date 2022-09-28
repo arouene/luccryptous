@@ -1,13 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/hex"
 	"io"
-	"bytes"
 	"log"
 	"math/big"
 	"net/http"
@@ -211,9 +211,15 @@ func generateRandomString(n int) ([]byte, error) {
 }
 
 /* Encrypt plaintext using AES 256 CFB */
-func encrypt(plaintext []byte) ([]byte, error) {
+func encrypt(plaintext io.Reader) ([]byte, error) {
+	// Get a slice of bytes from plaintext
+	text, err := io.ReadAll(plaintext)
+	if err != nil {
+		return nil, err
+	}
+
 	// Buffer for IV + encrypted secret
-	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
+	ciphertext := make([]byte, aes.BlockSize+len(text))
 
 	// Initialise a random IV
 	iv := ciphertext[:aes.BlockSize]
@@ -222,27 +228,13 @@ func encrypt(plaintext []byte) ([]byte, error) {
 	}
 
 	stream := cipher.NewCFBEncrypter(block, iv)
-	stream.XORKeyStream(ciphertext[aes.BlockSize:], plaintext)
+	stream.XORKeyStream(ciphertext[aes.BlockSize:], text)
 
 	return ciphertext, nil
 }
 
-func processEncryption(c *gin.Context, data interface{}) {
-	var plaintext []byte
-
-	switch v := data.(type) {
-	case string:
-		plaintext = []byte(v)
-	case []byte:
-		plaintext = v
-	default:
-		c.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{
-			"message": "Type error at encryption",
-		})
-		return
-	}
-
-	ciphertext, err := encrypt(plaintext)
+func processEncryption(c *gin.Context, data io.Reader) {
+	ciphertext, err := encrypt(data)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{
 			"message": "Error at encryption",
@@ -260,7 +252,8 @@ func getUUID(c *gin.Context) {
 			"message": "Error at UUID generation",
 		})
 	} else {
-		processEncryption(c, secret.String())
+		secretReader := strings.NewReader(secret.String())
+		processEncryption(c, secretReader)
 	}
 }
 
@@ -270,7 +263,8 @@ func getPass(c *gin.Context) {
 			"message": "Error at password generation",
 		})
 	} else {
-		processEncryption(c, secret)
+		secretReader := bytes.NewReader(secret)
+		processEncryption(c, secretReader)
 	}
 }
 
@@ -282,7 +276,8 @@ func msgCrypt(c *gin.Context) {
 			"message": "*secret* field is required",
 		})
 	} else {
-		processEncryption(c, payload.Secret)
+		secretReader := strings.NewReader(payload.Secret)
+		processEncryption(c, secretReader)
 	}
 }
 
@@ -302,5 +297,10 @@ func fileCrypt(c *gin.Context) {
 			"message": err,
 		})
 	}
-	processEncryption(c, buf.Bytes())
+
+	// Encode file value into base64
+	b64string := base64.StdEncoding.EncodeToString(buf.Bytes())
+	b64buf := strings.NewReader(b64string)
+	// Encrypt b64 based file value
+	processEncryption(c, b64buf)
 }
