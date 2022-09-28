@@ -1,5 +1,5 @@
 <script context="module">
-	let current_id = 0;
+    let current_id = 0;
 </script>
 
 <script>
